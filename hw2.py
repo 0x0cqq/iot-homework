@@ -11,7 +11,7 @@ import scipy.signal as sig
 # 
 # 注：此处“脉冲间隔”指相邻比特信号开始时间的时间差。
 
-class TSKConfig(Config):
+class PIMConfig(Config):
     def __init__(self, sampling_freq: float, pulse_freq: float, amplitude: float, phase: float, pulse_duration: float, pulse_interval_0: float, pulse_interval_1: float):
         super().__init__(sampling_freq, amplitude)
         self.pulse_freq = pulse_freq
@@ -20,41 +20,45 @@ class TSKConfig(Config):
         self.pulse_interval_0 = pulse_interval_0
         self.pulse_interval_1 = pulse_interval_1
 
-def TSK_modulation(data: np.ndarray, TSK_config: TSKConfig) -> np.ndarray:
+def PIM_modulation(data: np.ndarray, PIM_config: PIMConfig, plot: bool = False) -> np.ndarray:
 
-    pulse_signal = np.arange(0, TSK_config.pulse_duration, 1 / TSK_config.sampling_freq)
-    pulse_signal = TSK_config.amplitude * np.sin(2 * np.pi * TSK_config.pulse_freq * pulse_signal + TSK_config.phase)
-    signal_0 = np.concatenate((pulse_signal, np.zeros(int((TSK_config.pulse_interval_0 - TSK_config.pulse_duration) * TSK_config.sampling_freq))))
-    signal_1 = np.concatenate((pulse_signal, np.zeros(int((TSK_config.pulse_interval_1 - TSK_config.pulse_duration) * TSK_config.sampling_freq))))
+    pulse_signal = np.arange(0, PIM_config.pulse_duration, 1 / PIM_config.sampling_freq)
+    pulse_signal = PIM_config.amplitude * np.sin(2 * np.pi * PIM_config.pulse_freq * pulse_signal + PIM_config.phase)
+    signal_0 = np.concatenate((pulse_signal, np.zeros(int((PIM_config.pulse_interval_0 - PIM_config.pulse_duration) * PIM_config.sampling_freq))))
+    signal_1 = np.concatenate((pulse_signal, np.zeros(int((PIM_config.pulse_interval_1 - PIM_config.pulse_duration) * PIM_config.sampling_freq))))
     signal = np.concatenate([signal_0 if bit == 0 else signal_1 for bit in data])
     # padding: 前面加上 0.03s 的静音，后面加上一个脉冲
     padding_time = 0.03
-    padding_start = np.zeros(int(padding_time * TSK_config.sampling_freq))
+    padding_start = np.zeros(int(padding_time * PIM_config.sampling_freq))
     padding_end = pulse_signal
     signal = np.concatenate((padding_start, signal, padding_end))
+    if plot:
+        plot_signal(signal, "PIM Modulated Signal")
     return signal
 
-def TSK_demodulation(signal: np.ndarray, TSK_config: TSKConfig) -> np.ndarray:
+def PIM_demodulation(signal: np.ndarray, PIM_config: PIMConfig, plot: bool = False) -> np.ndarray:
     # 振幅的阈值
-    threshold_amp = TSK_config.amplitude / 2 
+    threshold_amp = PIM_config.amplitude / 2 
     # 信号长度的阈值
-    threshold_interval = (TSK_config.pulse_interval_0 + TSK_config.pulse_interval_1) / 2
+    threshold_interval = (PIM_config.pulse_interval_0 + PIM_config.pulse_interval_1) / 2
     
     # 带通滤波
     b, a = sig.iirfilter(
-        1,
-        [TSK_config.pulse_freq - 100, TSK_config.pulse_freq + 100],
+        3,
+        [PIM_config.pulse_freq - 100, PIM_config.pulse_freq + 100],
         btype="bandpass",
         analog=False,
         ftype="butter",
-        fs=TSK_config.sampling_freq,
+        fs=PIM_config.sampling_freq,
     )
     signal = sig.lfilter(b, a, signal)
-    plot_signal(signal, "signal")
+    if plot:
+        plot_signal(signal, "PIM Flitered Signal")
 
     
     amp = np.abs(sig.hilbert(signal))
-    plot_signal(amp, "amp")
+    if plot:
+        plot_signal(amp, "PIM Demodulated Signal")
 
     result = []
     start = 0
@@ -65,8 +69,8 @@ def TSK_demodulation(signal: np.ndarray, TSK_config: TSKConfig) -> np.ndarray:
                 start = i
                 continue
             # print(i - start)
-            # print(threshold_interval * TSK_config.sampling_freq)
-            if i - start > threshold_interval * TSK_config.sampling_freq:
+            # print(threshold_interval * PIM_config.sampling_freq)
+            if i - start > threshold_interval * PIM_config.sampling_freq:
                 result.append(1)
             else:
                 result.append(0)
@@ -88,28 +92,17 @@ class BPSKConfig(Config):
         self.signal_freq = signal_freq
         self.symbol_duration = symbol_duration
 
-def BPSK_modulation(data: np.ndarray, BPSK_config: BPSKConfig) -> np.ndarray:
+def BPSK_modulation(data: np.ndarray, BPSK_config: BPSKConfig, plot: bool = False) -> np.ndarray:
     signal = np.arange(0, BPSK_config.symbol_duration, 1 / BPSK_config.sampling_freq)
     signal = BPSK_config.amplitude * np.cos(2 * np.pi * BPSK_config.signal_freq * signal)
     signal_0 = signal # \phi = 0
     signal_1 = -signal # \phi = \pi
     signal = np.concatenate([signal_0 if bit == 0 else signal_1 for bit in data])
+    if plot:
+        plot_signal(signal, "BPSK modulated signal")
     return signal
 
-def BPSK_demodulation(signal: np.ndarray, BPSK_config: BPSKConfig) -> np.ndarray:
-
-    plot_signal(signal, "signal")
-
-    # 带通滤波
-    # b, a = sig.iirfilter(
-    #     1,
-    #     [BPSK_config.signal_freq - 100, BPSK_config.signal_freq + 100],
-    #     btype="bandpass",
-    #     analog=False,
-    #     ftype="butter",
-    #     fs=BPSK_config.sampling_freq,
-    # )
-    # signal_filtered = sig.lfilter(b, a, signal)
+def BPSK_demodulation(signal: np.ndarray, BPSK_config: BPSKConfig, plot: bool = False) -> np.ndarray:
 
     # 相干解调
     time_step = 1 / BPSK_config.sampling_freq
@@ -117,7 +110,6 @@ def BPSK_demodulation(signal: np.ndarray, BPSK_config: BPSKConfig) -> np.ndarray
     carrier_signal = np.cos(2 * np.pi * BPSK_config.signal_freq * carrier_signal)  # \phi = 0
     signal = signal * carrier_signal / BPSK_config.amplitude
     # 低通滤波
-
     b, a = sig.iirfilter(
         1,
         4 / BPSK_config.symbol_duration,
@@ -150,10 +142,10 @@ def BPSK_demodulation(signal: np.ndarray, BPSK_config: BPSKConfig) -> np.ndarray
             break
     
     data_length = round((end - start) / BPSK_config.sampling_freq / BPSK_config.symbol_duration)
-    print(data_length)
     
     signal = signal[start:end]
-    plot_signal(signal, "signal_filtered")
+    if plot:
+        plot_signal(signal, "BPSK demodulated signal")
 
     # 采样取平均
     datas = np.zeros(data_length)
@@ -186,30 +178,73 @@ def add_noise(signal: np.ndarray, noise_amp: float) -> np.ndarray:
     noise = np.random.normal(0, noise_amp, len(signal))
     return signal + noise
 
-def test_TSK(data: np.ndarray, TSK_config: TSKConfig, noise_db: float) -> float:
-    signal = TSK_modulation(data, TSK_config)
-    signal = add_noise(signal, from_db_to_amp(noise_db, TSK_config.amplitude))
-    result = TSK_demodulation(signal, TSK_config)
+
+def test_PIM(data: np.ndarray, PIM_config: PIMConfig) -> float:
+    signal = PIM_modulation(data, PIM_config, True)
+    write_signal_to_wav("PIM.wav", signal, PIM_config.sampling_freq)
+    read_signal = from_wav_to_signal("PIM.wav")
+    result = PIM_demodulation(read_signal, PIM_config, True)
+    print(f'PIM, data={data}, result={result}, correct rate={np.mean(result == data)}')
     return np.mean(result == data)
 
-def test_BPSK(data: np.ndarray, BPSK_config: BPSKConfig, noise_db: float) -> float:
+def test_BPSK(data: np.ndarray, BPSK_config: BPSKConfig) -> float:
+    signal = BPSK_modulation(data, BPSK_config, True)
+    write_signal_to_wav("BPSK.wav", signal, BPSK_config.sampling_freq)
+    read_signal = from_wav_to_signal("BPSK.wav")
+    result = BPSK_demodulation(read_signal, BPSK_config, True)
+    print(f'BPSK, data={data}, result={result}, correct rate={np.mean(result == data)}')
+    return np.mean(result == data)
+
+def test_PIM_noise(data: np.ndarray, PIM_config: PIMConfig, noise_db: float) -> float:
+    signal = PIM_modulation(data, PIM_config)
+    signal = add_noise(signal, from_db_to_amp(noise_db, PIM_config.amplitude))
+    plot_signal(signal, f"PIM Modulated Signal with Noise {noise_db} DB", True)
+    result = PIM_demodulation(signal, PIM_config, True)
+    return np.mean(result == data)
+
+def test_BPSK_noise(data: np.ndarray, BPSK_config: BPSKConfig, noise_db: float) -> float:
     signal = BPSK_modulation(data, BPSK_config)
     signal = add_noise(signal, from_db_to_amp(noise_db, BPSK_config.amplitude))
-    result = BPSK_demodulation(signal, BPSK_config)
+    plot_signal(signal, f"BPSK Modulated Signal with Noise {noise_db} DB", True)
+    result = BPSK_demodulation(signal, BPSK_config, True)
     return np.mean(result == data)
 
 if __name__ == "__main__":
+    # PIM
+    pim_data = np.array([0,1,0,0,1,1,1,0,1,1,0,0,1,0,1])
+    pim_config = PIMConfig(48000, 20000, 1, 0, 0.01, 0.02, 0.03) 
+    # test_PIM(pim_data, pim_config)
 
-    data = np.array([0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1])
+    # BPSK
+    bpsk_data = np.array([0,1,0,0,1,1,1,0,1,1,0,0,1,0,1,0])
+    bpsk_config = BPSKConfig(48000, 20000, 1, 0.025)
+    # test_BPSK(bpsk_data, bpsk_config)
+
+    # Noise
+    noise_dbs = [0]
+    noise_correct_rates = []
     
-    # config = TSKConfig(48000, 20000, 1, 0, 0.01, 0.02, 0.03)
-    # signal = TSK_modulation(data, config)
-    # print(TSK_demodulation(signal, config))
+    #   PIM
+    # for noise_db in noise_dbs:
+    #     noise_correct_rates.append(test_PIM_noise(pim_data, pim_config, noise_db))
+    # noise_str = [f"\t{noise_dbs[i]}dB: {noise_correct_rates[i]}\n" for i in range(len(noise_dbs))]
+    # print(f"PIM correct_rate:\n{''.join(noise_str)}")
 
+    #   BPSK
+    # for noise_db in noise_dbs:
+    #     noise_correct_rates.append(test_BPSK_noise(bpsk_data, bpsk_config, noise_db))
+    # noise_str = [f"\t{noise_dbs[i]}dB: {noise_correct_rates[i]}\n" for i in range(len(noise_dbs))]
+    # print(f"BPSK correct_rate:\n{''.join(noise_str)}")
 
-    # config = TSKConfig(48000, 20000, 1, 0, 0.01, 0.02, 0.03)
-    # print(test_TSK(data, config, 5))
+    # Length of BPSK symbol
+    times = [2, 4, 8, 16]
+    length_correct_rates = []
 
-    config = BPSKConfig(48000, 20000, 1, 0.1)
-    print(test_BPSK(data, config, 0))
+    for time in times:
+        bpsk_config.symbol_duration = 0.025 * time
+        length_correct_rates.append(test_BPSK_noise(bpsk_data, bpsk_config, 10))
+    length_str = [f"\tTime {times[i]}: {length_correct_rates[i]}\n" for i in range(len(times))]
+    print(f"BPSK correct_rate:\n{''.join(length_str)}")
+    
+
 
