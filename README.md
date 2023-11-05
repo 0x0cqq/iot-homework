@@ -8,17 +8,17 @@
 
 其他依赖可以通过 `pip install -r requirements.txt` 安装。
 
-作业代码位于 `main.py`。
+作业代码位于 `hw1.py`。
 
 ### 使用方法提示
 
-`python ./main.py --help`
+`python ./hw1.py --help`
 
 得到：
 
 ```
-python .\main.py --help
-usage: main.py [-h] [--sampling_freq SAMPLING_FREQ] [--carrier_freq CARRIER_FREQ] [--amplitude AMPLITUDE]
+python .\hw1.py --help
+usage: hw1.py [-h] [--sampling_freq SAMPLING_FREQ] [--carrier_freq CARRIER_FREQ] [--amplitude AMPLITUDE]
                [--symbol_duration SYMBOL_DURATION] [--duration DURATION] [--data DATA [DATA ...]]
                function filename
 

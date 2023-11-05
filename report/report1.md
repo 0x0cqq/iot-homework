@@ -24,19 +24,19 @@
 
 ### 任务一：生成声音
 
-`python main.py --carrier_freq 441 generate output_sample.wav`
+`python hw1.py --carrier_freq 441 generate output_sample.wav`
 
 生成频率为 441Hz 的 2s 音频。可以在音乐播放器中播放。
 
 ### 任务三：录音
 
-`python main.py record record.wav`
+`python hw1.py record record.wav`
 
 进行 2s 的录音完成后会在该文件夹增加一个时长为 2s 的 record.wav 文件。
 
 ### 任务二：读取录音
 
-`python main.py plot record.wav`
+`python hw1.py plot record.wav`
 
 程序会显示 record.wav 的波形：
 
@@ -48,9 +48,9 @@
 
 ### 任务四：调制与解调
 
-调制：`python main.py modulate modulated.wav --data 0 1 0 0 1 1 1 0 1 1 0 0 1 0 1` 
+调制：`python hw1.py modulate modulated.wav --data 0 1 0 0 1 1 1 0 1 1 0 0 1 0 1` 
 
-解调：`python main.py demodulate modulated.wav`
+解调：`python hw1.py demodulate modulated.wav`
 
 调制时，会在屏幕上显示调制的波形，随后存储到 modulated.wav 文件中：
 

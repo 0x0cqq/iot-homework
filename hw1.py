@@ -1,5 +1,5 @@
 import scipy.signal as sig
-import scipy.io.wavfile as wav
+
 import numpy as np
 import ffmpeg
 import os
@@ -8,10 +8,7 @@ import argparse
 
 from matplotlib import pyplot as plt
 
-
-# 写入 WAV 文件
-def write_signal_to_wav(filename: str, data: np.ndarray, sampling_freq: float):
-    wav.write(filename, int(sampling_freq), data)
+from utils import write_signal_to_wav, from_wav_to_signal, plot_signal
 
 
 # Problem 1:
@@ -49,17 +46,6 @@ def from_music_to_wav(filename: str, output_filename: str):
             print(
                 "Error: cannot convert the file to wav. This may be because the lack of ffmpeg bin in your PATH."
             )
-
-
-def from_wav_to_signal(filename: str) -> np.ndarray:
-    return wav.read(filename)[1]
-
-
-def plot_signal(signal: np.ndarray, title: str = ""):
-    plt.cla()
-    plt.plot(signal)
-    plt.title(title)
-    plt.show()
 
 
 def plot_music(filename: str):
@@ -244,7 +230,6 @@ def demodulate_signal(
     # sampling the signal to vote for the data
     data_len = int(len(t_filtered) / (sampling_freq * symbol_duration))
     datas = np.zeros(data_len)
-    # pick 100 points in each symbol duration
     for i in range(data_len):
         datas[i] = np.mean(
             t_filtered[
