@@ -221,20 +221,20 @@ if __name__ == "__main__":
     # test_BPSK(bpsk_data, bpsk_config)
 
     # Noise
-    noise_dbs = [0]
+    noise_dbs = [20, 10, 5, 0]
     noise_correct_rates = []
     
     #   PIM
-    # for noise_db in noise_dbs:
-    #     noise_correct_rates.append(test_PIM_noise(pim_data, pim_config, noise_db))
-    # noise_str = [f"\t{noise_dbs[i]}dB: {noise_correct_rates[i]}\n" for i in range(len(noise_dbs))]
-    # print(f"PIM correct_rate:\n{''.join(noise_str)}")
+    for noise_db in noise_dbs:
+        noise_correct_rates.append(test_PIM_noise(pim_data, pim_config, noise_db))
+    noise_str = [f"\t{noise_dbs[i]}dB: {noise_correct_rates[i]}\n" for i in range(len(noise_dbs))]
+    print(f"PIM correct_rate:\n{''.join(noise_str)}")
 
     #   BPSK
-    # for noise_db in noise_dbs:
-    #     noise_correct_rates.append(test_BPSK_noise(bpsk_data, bpsk_config, noise_db))
-    # noise_str = [f"\t{noise_dbs[i]}dB: {noise_correct_rates[i]}\n" for i in range(len(noise_dbs))]
-    # print(f"BPSK correct_rate:\n{''.join(noise_str)}")
+    for noise_db in noise_dbs:
+        noise_correct_rates.append(test_BPSK_noise(bpsk_data, bpsk_config, noise_db))
+    noise_str = [f"\t{noise_dbs[i]}dB: {noise_correct_rates[i]}\n" for i in range(len(noise_dbs))]
+    print(f"BPSK correct_rate:\n{''.join(noise_str)}")
 
     # Length of BPSK symbol
     times = [2, 4, 8, 16]

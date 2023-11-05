@@ -46,3 +46,15 @@ options:
 通过命令行输入参数。
 
 具体如何使用请见 report/report1.md 。
+
+## 作业2
+
+### 依赖安装
+
+仅需 `pip install -r requirements.txt` 安装依赖。
+
+### 运行代码
+
+`python ./hw2.py`
+
+具体报告请见 report/report2.md 。
