@@ -26,3 +26,12 @@ class Config:
     def __init__(self, sampling_freq: float, amplitude: float):
         self.sampling_freq = sampling_freq
         self.amplitude = amplitude
+
+# 从 dB 转换到振幅
+def from_db_to_amp(db: float, signal_amp: float) -> float:
+    return signal_amp / (10 ** (db / 20))
+
+# 在信号上加噪声
+def add_noise(signal: np.ndarray, noise_amp: float) -> np.ndarray:
+    noise = np.random.normal(0, noise_amp, len(signal))
+    return signal + noise
