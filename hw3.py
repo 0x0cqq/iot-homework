@@ -37,7 +37,7 @@ def QPSK_modulation(data: np.ndarray, QPSK_config: QPSKConfig, plot: bool = Fals
     signal = signal * np.sqrt(2) / 2
 
     if plot:
-        plot_signal(signal, QPSK_config.sampling_freq, QPSK_config.signal_freq, QPSK_config.signal_duration)
+        plot_signal(signal, "QPSK modulated")
 
     return signal
 
@@ -69,16 +69,16 @@ def QPSK_demodulation(signal: np.ndarray, QPSK_config: QPSKConfig, plot: bool = 
     
     return data
 
-def test_QPSK(data: np.ndarray, QPSK_config: QPSKConfig) -> float:
-    signal = QPSK_modulation(data, QPSK_config)
+def test_QPSK(data: np.ndarray, QPSK_config: QPSKConfig, plot: bool = False) -> float:
+    signal = QPSK_modulation(data, QPSK_config, plot)
     write_signal_to_wav("QPSK.wav", signal, QPSK_config.sampling_freq)
     read_signal = from_wav_to_signal("QPSK.wav")
     demodulated = QPSK_demodulation(read_signal, QPSK_config)
     print(f"QPSK, data={data}, demodulated={demodulated}, correct rate = {np.mean(data == demodulated)}")
     return np.mean(data == demodulated)
 
-def test_QPSK_noise(data: np.ndarray, QPSK_config: QPSKConfig, noise_db: float) -> float:
-    signal = QPSK_modulation(data, QPSK_config)
+def test_QPSK_noise(data: np.ndarray, QPSK_config: QPSKConfig, noise_db: float, plot: bool = False) -> float:
+    signal = QPSK_modulation(data, QPSK_config, plot)
     signal = add_noise(signal, from_db_to_amp(noise_db, QPSK_config.amplitude))
     write_signal_to_wav("QPSK.wav", signal, QPSK_config.sampling_freq)
     read_signal = from_wav_to_signal("QPSK.wav")
@@ -129,7 +129,6 @@ def test_DFT(N: int, funcs: List[Callable[[int], np.ndarray]] = [f1, f2, f3]):
     for i in range(len(funcs)):
         x = get_x_axis(N, r)
         y = DFT_N(N, funcs[i], r)
-        print(x.shape, y.shape)
         axes[i].scatter(x, np.abs(y))
         axes[i].set_title(f"N={N}, f{i+1}, r={r}")
     fig.tight_layout()
@@ -139,11 +138,17 @@ def test_DFT(N: int, funcs: List[Callable[[int], np.ndarray]] = [f1, f2, f3]):
 
 
 if __name__ == '__main__':
+    # fix seed
+    np.random.seed(34)
+
     data = np.array([0,1,0,0,1,1,1,0,1,1,0,0,1,0,1,0])
     QPSK_config = QPSKConfig(48000, 20000, 1, 0.025)
+    print('First QPSK:')
     test_QPSK(data, QPSK_config)
+    print('')
 
-    noise_dbs = [20, 10, 5, 0, -30, -50]
+    print('QPSK with noise:')
+    noise_dbs = [20, 10, 5, 0, -10, -20, -30, -50]
     noise_correct_rates = []
     for noise_db in noise_dbs:
         result = test_QPSK_noise(data, QPSK_config, noise_db)
@@ -157,7 +162,7 @@ if __name__ == '__main__':
     length_correct_rates = []
     for time in times:
         QPSK_config.signal_duration = 0.025 * time
-        result = test_QPSK_noise(data, QPSK_config, 10)
+        result = test_QPSK_noise(data, QPSK_config, -30)
         length_correct_rates.append(result)
     length_str = [f"\t{times[i]}: {length_correct_rates[i]}\n" for i in range(len(times))]
     print(f"QPSK correct_rate:\n{''.join(length_str)}")

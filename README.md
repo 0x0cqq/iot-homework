@@ -58,3 +58,15 @@ options:
 `python ./hw2.py`
 
 具体报告请见 report/report2.md 。
+
+## 作业3
+
+### 依赖安装
+
+仅需 `pip install -r requirements.txt` 安装依赖。
+
+### 运行代码
+
+`python ./hw3.py`
+
+具体报告请见 report/report3.md 。
