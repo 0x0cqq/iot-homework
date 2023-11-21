@@ -70,3 +70,15 @@ options:
 `python ./hw3.py`
 
 具体报告请见 report/report3.md 。
+
+## 作业4
+
+### 依赖安装
+
+仅需 `pip install -r requirements.txt` 安装依赖。
+
+### 运行代码
+
+`python ./hw4.py`
+
+具体报告请见 report/report4.md 。
